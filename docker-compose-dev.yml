@@ -1,0 +1,32 @@
+version: '3' 
+services:
+  database:
+    build: ./idm-postgres
+    image: jhelbich:idmpg
+    ports:
+      - "5432:5432" 
+    restart: always
+    networks:
+      - webnet
+
+  webserver:
+    build: ./idm-tomcat
+    image: jhelbich:idmtomcat
+    # mount point for application in tomcat
+    volumes:
+      - $IDM_TARGET:/usr/local/tomcat/webapps/idm-backend
+    # open ports for tomcat and remote debugging
+    ports:
+      - "8080:8080" 
+      - "8000:8000"
+    restart: always
+    depends_on:
+      - database
+    networks:
+      - webnet
+    environment:
+      - "JAVA_OPTS=-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom -Dorg.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true -Djavax.servlet.request.encoding=UTF-8 -Dspring.profiles.active=dev"
+      - "CATALINA_OPTS=-Xmx512M -server -XX:+UseParallelGC"
+
+networks:
+  webnet:
